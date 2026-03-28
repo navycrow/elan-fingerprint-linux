@@ -59,8 +59,15 @@ if grep -q "0x$PID" "$DRIVER_FILE"; then
 else
   echo "➕ Adding ID 0x$PID to driver..."
   LAST_ID=$(grep -oP '\.pid = \K0x0c[0-9a-f]+' "$DRIVER_FILE" | tail -1)
-  sed -i "s/\(.pid = $LAST_ID, .driver_data = ELANMOC2_ALL_DEV\),/\1,\n  {.vid = ELANMOC2_VEND_ID, .pid = 0x$PID, .driver_data = ELANMOC2_ALL_DEV},/" "$DRIVER_FILE"
-  echo "✅ ID added."
+  sed -i "s/\.pid = $LAST_ID, .driver_data = ELANMOC2_ALL_DEV},/& \n  {.vid = ELANMOC2_VEND_ID, .pid = 0x$PID, .driver_data = ELANMOC2_ALL_DEV},/" "$DRIVER_FILE"
+
+  # Check writing
+  if grep -q "0x$PID" "$DRIVER_FILE"; then
+    echo "✅ ID 0x$PID successfully added to $DRIVER_FILE"
+  else
+    echo "❌ Failed to add ID. Check permissions or file path."
+    exit 1
+  fi
 fi
 
 # --- 5. Build and install ---
@@ -75,7 +82,8 @@ sudo ldconfig
 # --- 6. Cleanup ---
 echo ""
 echo "🧹 Cleaning up temporary directory..."
-rm -rf "$TMPDIR"
+cd ~
+sudo rm -rf "$TMPDIR"
 
 # --- 7. Enable PAM authentication ---
 echo ""
