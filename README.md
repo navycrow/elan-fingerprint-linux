@@ -1,4 +1,4 @@
-# elanmoc2-driver
+# elan-fingerprint-linux
 
 Automated install script for **Elan** fingerprint readers not natively supported on Ubuntu.
 
@@ -23,8 +23,8 @@ The version of `libfprint` available in Ubuntu's official repositories does not 
 ## Installation
 
 ```bash
-git clone https://github.com/navycrow/elanmoc2-driver.git
-cd elanmoc2-driver
+git clone https://github.com/navycrow/elan-fingerprint-linux.git
+cd elan-fingerprint-linux
 chmod +x install.sh
 ./install.sh
 ```

@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
-# Installation driver empreinte Elan (elanmoc2) sous Ubuntu
-# Usage : bash install_elanmoc2.sh
+# Elan fingerprint installation on Ubuntu
+# Usage : bash install.sh
 # ============================================================
 
 set -e  # arrête le script si une commande échoue
