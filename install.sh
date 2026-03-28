@@ -1,35 +1,35 @@
 #!/bin/bash
 # ============================================================
-# Elan fingerprint installation on Ubuntu
-# Usage : bash install.sh
+# Elan fingerprint reader driver installer (elanmoc2) - Ubuntu
+# Usage: bash install.sh
 # ============================================================
 
-set -e  # arrête le script si une commande échoue
+set -e  # exit immediately if a command fails
 
-# --- 0. Vérification des droits sudo ---
+# --- 0. Check sudo privileges ---
 if ! sudo -v 2>/dev/null; then
-  echo "❌ Ce script nécessite les droits sudo."
+  echo "❌ This script requires sudo privileges."
   exit 1
 fi
-# Garde sudo actif en arrière-plan pour éviter l'expiration
+# Keep sudo alive in the background to prevent timeout during compilation
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
-# --- 1. Détection automatique de l'ID capteur ---
-echo "🔍 Détection du capteur Elan..."
+# --- 1. Detect Elan sensor ---
+echo "🔍 Detecting Elan sensor..."
 DEVICE=$(lsusb | grep -i "elan")
 
 if [ -z "$DEVICE" ]; then
-  echo "❌ Aucun capteur Elan détecté. Vérifie avec : lsusb"
+  echo "❌ No Elan sensor detected. Check with: lsusb"
   exit 1
 fi
 
-echo "Capteur trouvé : $DEVICE"
+echo "Sensor found: $DEVICE"
 PID=$(echo "$DEVICE" | head -n 1 | grep -oP '04f3:\K[0-9a-f]{4}')
-echo "➡️  PID détecté : 0x$PID"
+echo "➡️  Detected PID: 0x$PID"
 
-# --- 2. Dépendances ---
+# --- 2. Install build dependencies ---
 echo ""
-echo "📦 Installation des dépendances..."
+echo "📦 Installing dependencies..."
 sudo apt update -q
 sudo apt install -y \
   libglib2.0-dev libgusb-dev libgirepository1.0-dev \
@@ -37,57 +37,57 @@ sudo apt install -y \
   meson ninja-build git libssl-dev libcairo2-dev \
   fprintd libpam-fprintd
 
-# --- 3. Clone dans un dossier temporaire ---
+# --- 3. Clone into a temporary directory ---
 echo ""
-echo "⬇️  Téléchargement de libfprint (branche elanmoc2)..."
+echo "⬇️  Downloading libfprint (elanmoc2 branch)..."
 TMPDIR=$(mktemp -d)
-echo "📁 Dossier temporaire : $TMPDIR"
+echo "📁 Temporary directory: $TMPDIR"
 git clone -b elanmoc2 https://gitlab.freedesktop.org/Depau/libfprint/ "$TMPDIR/libfprint"
 cd "$TMPDIR/libfprint"
 
 DRIVER_FILE="libfprint/drivers/elanmoc2/elanmoc2.c"
 
-# --- 4. Ajout de l'ID si absent ---
+# --- 4. Inject sensor ID if missing ---
 if [ ! -f "$DRIVER_FILE" ]; then
-  echo "❌ Fichier driver introuvable : $DRIVER_FILE"
-  echo "   La structure du repo a peut-être changé."
+  echo "❌ Driver file not found: $DRIVER_FILE"
+  echo "   The repository structure may have changed."
   exit 1
 fi
 
 if grep -q "0x$PID" "$DRIVER_FILE"; then
-  echo "✅ ID 0x$PID déjà présent dans le driver."
+  echo "✅ ID 0x$PID already present in driver."
 else
-  echo "➕ Ajout de l'ID 0x$PID dans le driver..."
+  echo "➕ Adding ID 0x$PID to driver..."
   LAST_ID=$(grep -oP '\.pid = \K0x0c[0-9a-f]+' "$DRIVER_FILE" | tail -1)
   sed -i "s/\(.pid = $LAST_ID, .driver_data = ELANMOC2_ALL_DEV\),/\1,\n  {.vid = ELANMOC2_VEND_ID, .pid = 0x$PID, .driver_data = ELANMOC2_ALL_DEV},/" "$DRIVER_FILE"
-  echo "✅ ID ajouté."
+  echo "✅ ID added."
 fi
 
-# --- 5. Compilation et installation ---
+# --- 5. Build and install ---
 echo ""
-echo "🔨 Compilation..."
+echo "🔨 Compiling..."
 meson setup builddir
 cd builddir
 ninja
 sudo ninja install
 sudo ldconfig
 
-# --- 6. Nettoyage ---
+# --- 6. Cleanup ---
 echo ""
-echo "🧹 Nettoyage du dossier temporaire..."
+echo "🧹 Cleaning up temporary directory..."
 rm -rf "$TMPDIR"
 
-# --- 7. Activation PAM ---
+# --- 7. Enable PAM authentication ---
 echo ""
-echo "🔐 Activation de l'authentification par empreinte (PAM)..."
+echo "🔐 Enabling fingerprint authentication (PAM)..."
 sudo systemctl restart fprintd
 sudo pam-auth-update --enable fprintd
 
-# --- 8. Enrôlement ---
+# --- 8. Enroll fingerprint ---
 echo ""
-echo "👆 Enrôlement de l'empreinte (index droit)..."
-echo "   Pose et enlève ton doigt plusieurs fois jusqu'à 'enroll-completed'."
+echo "👆 Enrolling fingerprint (right index finger)..."
+echo "   Place and lift your finger several times until 'enroll-completed'."
 fprintd-enroll -f right-index-finger
 
 echo ""
-echo "✅ Installation terminée ! Teste avec : sudo ls"
+echo "✅ Installation complete! Test with: sudo ls"
