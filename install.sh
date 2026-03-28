@@ -94,7 +94,7 @@ sudo pam-auth-update --enable fprintd
 # --- 8. Enroll fingerprint ---
 echo ""
 echo "👆 Enrolling fingerprint (right index finger)..."
-echo "   Place and lift your finger several times until 'enroll-completed'."
+echo "   Place and lift your finger ** SEVERAL TIMES ** until 'enroll-completed'."
 fprintd-enroll -f right-index-finger
 
 echo ""
