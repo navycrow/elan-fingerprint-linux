@@ -2,7 +2,7 @@
 
 Automated install script for **Elan** fingerprint readers not natively supported on Ubuntu.
 
-Tested on a **LG Gram 17** with sensor `04f3:0ca2` (ELAN:ARM-M4).
+Tested on a **LG Gram 17 2025** with sensor `04f3:0ca2` (ELAN:ARM-M4).
 
 ---
 
