@@ -105,9 +105,10 @@ sudo systemctl restart fprintd
 
 | Distro | Script | Tested |
 |---|---|---|
-| Ubuntu 22.04+ | `debian-install.sh` | ✅ |
-| Debian 12+ | `debian-install.sh` | ✅ |
-| Fedora 40+ | `fedora-install.sh` | ✅ |
+| Ubuntu 24+ | `debian-install.sh` | ✅ |
+| Debian 12+ | `debian-install.sh` | ⚠️ (untested) |
+| Linux Mint 22+ | `debian-install.sh` | ✅ |
+| Fedora 43+ | `fedora-install.sh` | ✅ |
 | Arch | — | ❌ (coming soon) |
 
 ---
