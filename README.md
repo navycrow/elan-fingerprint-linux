@@ -1,6 +1,6 @@
 # elan-fingerprint-linux
 
-Automated install script for **Elan** fingerprint readers not natively supported on Ubuntu.
+Automated install scripts for **Elan** fingerprint readers not natively supported on Linux.
 
 Tested on a **LG Gram 17 2025** with sensor `04f3:0ca2` (ELAN:ARM-M4).
 
@@ -8,28 +8,41 @@ Tested on a **LG Gram 17 2025** with sensor `04f3:0ca2` (ELAN:ARM-M4).
 
 ## Why this script?
 
-The version of `libfprint` available in Ubuntu's official repositories does not support all recent Elan sensors. This script compiles and installs the community branch [`elanmoc2`](https://gitlab.freedesktop.org/Depau/libfprint/) of `libfprint`, and automatically injects your sensor ID into the source code if needed.
+The version of `libfprint` available in official repositories does not support all recent Elan sensors. These scripts compile and install the community branch [`elanmoc2`](https://gitlab.freedesktop.org/Depau/libfprint/) of `libfprint`, and automatically inject your sensor ID into the source code if needed.
 
 ---
 
 ## Requirements
 
-- Ubuntu 22.04 or later
 - sudo privileges
 - Internet connection
+- A supported distribution (see [Compatibility](#compatibility))
 
 ---
 
 ## Installation
 
+Clone the repository:
 ```bash
 git clone https://github.com/navycrow/elan-fingerprint-linux.git
 cd elan-fingerprint-linux
-chmod +x install.sh
-./install.sh
 ```
 
-The script handles everything:
+Then run the script for your distribution:
+
+### Debian / Ubuntu
+```bash
+chmod +x debian-install.sh
+./debian-install.sh
+```
+
+### Fedora
+```bash
+chmod +x fedora-install.sh
+./fedora-install.sh
+```
+
+Each script handles everything:
 
 1. Automatically detect your Elan sensor
 2. Install build dependencies
@@ -79,16 +92,23 @@ gnome-control-center users
 
 If after installation you can no longer log in (password rejected), see [RECOVERY.md](./RECOVERY.md).
 
+**Fedora only:** If enrollment fails with `No devices available`, the library path may not be registered. The script handles this automatically, but if it persists:
+```bash
+echo '/usr/local/lib64' | sudo tee /etc/ld.so.conf.d/local-lib64.conf
+sudo ldconfig
+sudo systemctl restart fprintd
+```
+
 ---
 
 ## Compatibility
 
-| Distro | Supported |
-|---|---|
-| Ubuntu 22.04+ | ✅ |
-| Debian 12+ | ✅ (untested) |
-| Fedora | ❌ (coming soon) |
-| Arch | ❌ (coming soon) |
+| Distro | Script | Tested |
+|---|---|---|
+| Ubuntu 22.04+ | `debian-install.sh` | ✅ |
+| Debian 12+ | `debian-install.sh` | ✅ |
+| Fedora 40+ | `fedora-install.sh` | ✅ |
+| Arch | — | ❌ (coming soon) |
 
 ---
 
