@@ -1,19 +1,15 @@
 # elan-fingerprint-linux
-
 Automated install scripts for **Elan** fingerprint readers not natively supported on Linux.
-
 Tested on a **LG Gram 17 2025** with sensor `04f3:0ca2` (ELAN:ARM-M4).
 
 ---
 
 ## Why this script?
-
 The version of `libfprint` available in official repositories does not support all recent Elan sensors. These scripts compile and install the community branch [`elanmoc2`](https://gitlab.freedesktop.org/Depau/libfprint/) of `libfprint`, and automatically inject your sensor ID into the source code if needed.
 
 ---
 
 ## Requirements
-
 - sudo privileges
 - Internet connection
 - A supported distribution (see [Compatibility](#compatibility))
@@ -21,7 +17,6 @@ The version of `libfprint` available in official repositories does not support a
 ---
 
 ## Installation
-
 Clone the repository:
 ```bash
 git clone https://github.com/navycrow/elan-fingerprint-linux.git
@@ -42,8 +37,21 @@ chmod +x fedora-install.sh
 ./fedora-install.sh
 ```
 
-Each script handles everything:
+### Bazzite (and other Fedora Atomic / immutable systems)
+Bazzite uses an immutable filesystem, so the install runs in **two passes**:
 
+**Pass 1** — layers `fprintd` via `rpm-ostree`, then prompts for a reboot:
+```bash
+chmod +x bazzite-install.sh
+./bazzite-install.sh
+```
+
+After the reboot, run the script again for **Pass 2** — compiles the driver inside a Distrobox container and enrolls your fingerprint:
+```bash
+./bazzite-install.sh
+```
+
+Each script handles everything:
 1. Automatically detect your Elan sensor
 2. Install build dependencies
 3. Clone and compile `libfprint` (`elanmoc2` branch)
@@ -60,7 +68,6 @@ Each script handles everything:
 ```bash
 fprintd-enroll -f right-index-finger
 ```
-
 Available fingers: `right-index-finger`, `right-middle-finger`, `left-index-finger`, `left-middle-finger`, etc.
 
 **List enrolled fingerprints:**
@@ -73,6 +80,12 @@ fprintd-list $USER
 fprintd-delete $USER
 ```
 
+**Re-enroll (if a previous enrollment exists):**
+```bash
+fprintd-delete $USER
+fprintd-enroll -f right-index-finger
+```
+
 **Manage via GUI:**
 ```bash
 gnome-control-center users
@@ -82,9 +95,9 @@ gnome-control-center users
 ---
 
 ## Known limitations
-
 - Fingerprint authentication **does not work on the GDM login screen** (known Linux limitation)
 - Works for: `sudo`, screen unlock, in-session authentication
+- **Bazzite:** the compiled library is installed to `/usr/local/lib64/`. This path survives updates but may need to be re-registered after a major `rpm-ostree` rebase (re-run the script from pass 2)
 
 ---
 
@@ -99,6 +112,12 @@ sudo ldconfig
 sudo systemctl restart fprintd
 ```
 
+**Bazzite:** If enrollment fails with `EnrollStart failed: PrintsNotDeletedFromDevice`, a previous enrollment is stored on the chip. Delete it first:
+```bash
+fprintd-delete $USER
+fprintd-enroll -f right-index-finger
+```
+
 ---
 
 ## Compatibility
@@ -109,16 +128,15 @@ sudo systemctl restart fprintd
 | Debian 12+ | `debian-install.sh` | ⚠️ (untested) |
 | Linux Mint 22+ | `debian-install.sh` | ✅ |
 | Fedora 43+ | `fedora-install.sh` | ✅ |
+| Bazzite (latest) | `bazzite-install.sh` | ✅ |
 | Arch | — | ❌ (coming soon) |
 
 ---
 
 ## Contributing
-
 If you have a different Elan sensor and the script worked for you, open an issue or a PR with your machine model and PID (`lsusb`).
 
 ---
 
 ## License
-
 MIT
