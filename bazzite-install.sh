@@ -145,12 +145,13 @@ TYPELIB_SRC="$HOME/.local/lib64/girepository-1.0/FPrint-2.0.typelib"
 
 if [ ! -f "$LIB_SRC" ]; then
   echo "❌ Compiled library not found at $LIB_SRC"
-  echo "   The Distrobox build may have failed. Check the output above."
   exit 1
 fi
 
+sudo mkdir -p /usr/local/lib64/girepository-1.0
+
 sudo cp "$LIB_SRC" /usr/local/lib64/
-sudo cp "$TYPELIB_SRC" /usr/local/lib64/
+sudo cp "$TYPELIB_SRC" /usr/local/lib64/girepository-1.0/
 sudo ln -sf /usr/local/lib64/libfprint-2.so.2.0.0 /usr/local/lib64/libfprint-2.so.2
 sudo ln -sf /usr/local/lib64/libfprint-2.so.2     /usr/local/lib64/libfprint-2.so
 
