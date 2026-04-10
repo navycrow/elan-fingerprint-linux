@@ -6,7 +6,7 @@
 # ⚠️  Bazzite is an immutable system (Fedora Atomic).
 #     This script runs in two passes:
 #       Pass 1: layer fprintd via rpm-ostree, then reboot (if needed)
-#       Pass 2: compile inside Distrobox + enroll fingerprint
+#       Pass 2: compile inside Distrobox (rootful) + enroll fingerprint
 # ============================================================
 set -e
 
@@ -62,7 +62,7 @@ if [ ! -f "$PASS_FLAG" ]; then
 fi
 
 # ============================================================
-# PASS 2 — Compile inside Distrobox + enroll fingerprint
+# PASS 2 — Compile inside Distrobox (rootful) + enroll fingerprint
 # ============================================================
 echo "▶️  Pass 2: compiling and installing the driver..."
 
@@ -79,17 +79,20 @@ if ! command -v distrobox &>/dev/null; then
   exit 1
 fi
 
-# Create the Fedora container if it doesn't exist yet
+# Create the rootful Fedora container if it doesn't exist yet
+# --root is required so that sudo works correctly inside the container
 BOX_NAME="fedora-elan-build"
 if ! distrobox list 2>/dev/null | grep -q "$BOX_NAME"; then
-  echo "📦 Creating Fedora Distrobox container..."
-  distrobox create --name "$BOX_NAME" --image fedora:latest --yes
+  echo "📦 Creating rootful Fedora Distrobox container..."
+  distrobox create --name "$BOX_NAME" --image fedora:latest --yes --root
+else
+  echo "✅ Container $BOX_NAME already exists, reusing."
 fi
 
 echo ""
 echo "🔨 Compiling inside Distrobox container ($BOX_NAME)..."
 
-distrobox enter "$BOX_NAME" -- bash -s << INNERSCRIPT
+distrobox enter --root "$BOX_NAME" -- bash -s << INNERSCRIPT
 set -e
 
 echo "📦 Installing build dependencies..."
@@ -137,7 +140,6 @@ rm -rf "\$TMPDIR"
 INNERSCRIPT
 
 # --- Copy the compiled library to the system path ---
-# Note: sudo cp with || true was silently swallowing errors; we now copy explicitly.
 echo "📁 Copying library to system path..."
 
 LIB_SRC="$HOME/.local/lib64/libfprint-2.so.2.0.0"
@@ -145,6 +147,8 @@ TYPELIB_SRC="$HOME/.local/lib64/girepository-1.0/FPrint-2.0.typelib"
 
 if [ ! -f "$LIB_SRC" ]; then
   echo "❌ Compiled library not found at $LIB_SRC"
+  echo "   The build may have installed to a different path inside the container."
+  echo "   Check with: find \$HOME/.local -name 'libfprint*'"
   exit 1
 fi
 
